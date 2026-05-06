@@ -249,6 +249,35 @@ canvas {
   image-rendering: auto;
 }
 
+/* ---- 名字输入框（隐藏，仅用于触发移动端键盘） ---- */
+.name-input {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  font-size: 16px; /* 防止 iOS 缩放 */
+  border: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.name-input.active {
+  width: 200px;
+  height: 40px;
+  opacity: 0.01;
+  pointer-events: auto;
+  z-index: 10;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* ---- 响应式：窄屏隐藏面板 ---- */
 @media (max-width: 900px) {
   .side-panel {

@@ -120,6 +120,7 @@ async function submitScore(name, s) {
 function resetNameInput() {
   inputName = playerName || '';
   isEnteringName = false;
+  hideNameInput();
 }
 
 // ---- 面板 DOM 缓存 ----
@@ -530,6 +531,7 @@ function enterGameOverCheck() {
   } else {
     isEnteringName = true;
     inputName = '';
+    showNameInput();
   }
 }
 
@@ -551,6 +553,68 @@ function getCanvasCoords(e) {
 // ---- UI 按钮区域常量 ----
 const BTN_SOUND = { x: 310, y: 8, w: 34, h: 34 };
 const BTN_PAUSE = { x: 354, y: 8, w: 34, h: 34 };
+
+// ---- 名字输入按钮（Canvas 坐标系） ----
+function getNameInputButtons() {
+  const panelW = 260;
+  const panelX = (W - panelW) / 2;  // 70
+  const panelY = 180;
+  return {
+    confirm: { x: panelX + 20, y: panelY + 175, w: 100, h: 36 },
+    skip:    { x: panelX + 140, y: panelY + 175, w: 100, h: 36 },
+  };
+}
+
+function getNameInputBox() {
+  const panelW = 260;
+  const panelY = 180;
+  const inputW = 110;
+  const inputH = 38;
+  const inputX = (W - inputW) / 2;
+  const inputY = panelY + 110;
+  return { x: inputX, y: inputY, w: inputW, h: inputH };
+}
+
+// ---- 名字输入 HTML 元素管理 ----
+const nameInputEl = document.getElementById('name-input');
+
+function showNameInput() {
+  if (!nameInputEl) return;
+  nameInputEl.classList.add('active');
+  nameInputEl.value = inputName;
+  nameInputEl.focus();
+}
+
+function hideNameInput() {
+  if (!nameInputEl) return;
+  nameInputEl.classList.remove('active');
+  nameInputEl.blur();
+  nameInputEl.value = '';
+}
+
+nameInputEl.addEventListener('input', () => {
+  inputName = nameInputEl.value.slice(0, MAX_NAME_LEN).toUpperCase();
+  nameInputEl.value = inputName;
+});
+
+nameInputEl.addEventListener('keydown', (e) => {
+  if (e.code === 'Enter' && inputName.length > 0) {
+    e.preventDefault();
+    savePlayerName(inputName);
+    submitScore(inputName, score);
+    loadLeaderboard();
+    hideNameInput();
+    resetNameInput();
+    gameState = STATE.START;
+  }
+});
+
+nameInputEl.addEventListener('blur', () => {
+  // 如果仍在名字输入模式，重新聚焦以保持键盘打开
+  setTimeout(() => {
+    if (isEnteringName) nameInputEl.focus();
+  }, 100);
+});
 
 function rectContains(btn, px, py) {
   return px >= btn.x && px <= btn.x + btn.w && py >= btn.y && py <= btn.y + btn.h;
@@ -726,8 +790,27 @@ function onCanvasInput(e) {
     return;
   }
 
-  // 名字输入模式下，点击不做游戏操作
-  if (isEnteringName) return;
+  // 名字输入模式下，检查确认/跳过按钮和输入框
+  if (isEnteringName) {
+    const btns = getNameInputButtons();
+    if (rectContains(btns.confirm, x, y)) {
+      if (inputName.length > 0) {
+        savePlayerName(inputName);
+        submitScore(inputName, score);
+        loadLeaderboard();
+      }
+      hideNameInput();
+      resetNameInput();
+      gameState = STATE.START;
+    } else if (rectContains(btns.skip, x, y)) {
+      hideNameInput();
+      resetNameInput();
+      gameState = STATE.START;
+    } else if (rectContains(getNameInputBox(), x, y)) {
+      showNameInput();
+    }
+    return;
+  }
 
   // 游戏输入
   switch (gameState) {
@@ -753,30 +836,10 @@ canvas.addEventListener('click', onCanvasInput);
 canvas.addEventListener('touchstart', onCanvasInput, { passive: false });
 
 document.addEventListener('keydown', (e) => {
-  // 名字输入模式下，拦截键盘输入
+  // 名字输入模式下：不拦截，交给 HTML input 处理
   if (isEnteringName) {
-    e.preventDefault();
-    if (e.code === 'Enter') {
-      if (inputName.length > 0) {
-        savePlayerName(inputName);
-        submitScore(inputName, score);
-        loadLeaderboard();
-        resetNameInput();
-        gameState = STATE.START;
-      }
-      return;
-    }
-    if (e.code === 'Backspace') {
-      inputName = inputName.slice(0, -1);
-      return;
-    }
-    if (inputName.length < MAX_NAME_LEN && /^Key[A-Z]$/.test(e.code)) {
-      inputName += e.code.slice(-1);
-      return;
-    }
-    if (inputName.length < MAX_NAME_LEN && /^Digit[0-9]$/.test(e.code)) {
-      inputName += e.code.slice(-1);
-      return;
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+      e.preventDefault(); // 阻止页面滚动
     }
     return;
   }
@@ -1011,9 +1074,30 @@ function drawNameInputScreen() {
   const displayName = inputName + '_'.repeat(MAX_NAME_LEN - inputName.length);
   ctx.fillText(displayName, W / 2, inputY + 28);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = '12px Arial';
-  ctx.fillText('按 Enter 确认', W / 2, inputY + 58);
+  // 确认按钮
+  const btns = getNameInputButtons();
+  drawTouchButton(ctx, btns.confirm, '#4caf50', '确认');
+  // 跳过按钮
+  drawTouchButton(ctx, btns.skip, '#888', '跳过');
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('点击上方输入框弹出键盘', W / 2, btns.confirm.y + 52);
+}
+
+function drawTouchButton(ctx, btn, color, text) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  fillRoundRect(ctx, btn.x, btn.y, btn.w, btn.h, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, btn.x + btn.w / 2, btn.y + btn.h / 2 + 6);
 }
 
 function drawLeaderboardOnStart() {
