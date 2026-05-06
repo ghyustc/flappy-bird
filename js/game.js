@@ -10,20 +10,20 @@ const H = canvas.height;  // 700
 
 // ---- 游戏配置 ----
 const CONFIG = {
-  gravity: 0.45,
-  flapStrength: -7.5,
+  gravity: 0.38,
+  flapStrength: -7.0,
   birdX: 100,
   birdRadius: 18,
   pipeWidth: 58,
-  pipeGap: 150,
-  pipeSpeed: 2.0,
-  pipeInterval: 100,
+  pipeGap: 175,
+  pipeSpeed: 1.7,
+  pipeInterval: 125,
   groundHeight: 80,
   ceilingHeight: 0,
   maxRotation: Math.PI / 4,
-  speedIncrement: 0.08,
-  minPipeGap: 110,
-  gapDecrement: 1.2,
+  speedIncrement: 0.1,
+  minPipeGap: 105,
+  gapDecrement: 1.5,
   cloudCount: 5,
 };
 
