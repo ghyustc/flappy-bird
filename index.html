@@ -34,28 +34,17 @@
 
     <!-- 右侧面板 -->
     <div class="side-panel panel-right">
-      <div class="panel-title">操作说明</div>
+      <div class="panel-title">🏆 排行榜</div>
       <div class="panel-divider"></div>
-      <div class="control-list">
-        <div class="control-item">
-          <kbd>空格</kbd><kbd>W</kbd><kbd>↑</kbd>
-          <span>飞行</span>
-        </div>
-        <div class="control-item">
-          <kbd>P</kbd>
-          <span>暂停</span>
-        </div>
-        <div class="control-item">
-          <span class="control-icon">🖱️</span>
-          <span>点击飞行</span>
-        </div>
-        <div class="control-item">
-          <span class="control-icon">📱</span>
-          <span>触屏飞行</span>
-        </div>
+      <div class="leaderboard-list" id="leaderboard-list">
+        <div class="lb-placeholder">加载中...</div>
       </div>
       <div class="panel-divider"></div>
-      <p class="panel-tip">穿过管道得分<br>难度逐渐递增</p>
+      <div class="player-id-area" id="player-id-area">
+        <span class="player-id-label">你的 ID：</span>
+        <span class="player-id-value" id="player-id-value">未设置</span>
+      </div>
+      <p class="panel-tip" style="margin-top:8px;">进榜自动记录<br>按 M 修改 ID</p>
     </div>
   </div>
 

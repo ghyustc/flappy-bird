@@ -55,6 +55,7 @@ let playerName = localStorage.getItem('flappyPlayerName') || '';
 function savePlayerName(n) {
   playerName = n;
   localStorage.setItem('flappyPlayerName', n);
+  updateLeaderboardDOM();
 }
 
 async function loadLeaderboard() {
@@ -71,6 +72,34 @@ async function loadLeaderboard() {
     // 网络错误则静默，保留缓存数据
   }
   leaderboardLoading = false;
+  updateLeaderboardDOM();
+}
+
+function updateLeaderboardDOM() {
+  const listEl = document.getElementById('leaderboard-list');
+  const idEl = document.getElementById('player-id-value');
+  if (!listEl) return;
+
+  if (leaderboardData.length === 0) {
+    listEl.innerHTML = '<div class="lb-placeholder">暂无数据</div>';
+  } else {
+    const maxShow = Math.min(LEADERBOARD_SIZE, leaderboardData.length);
+    let html = '';
+    for (let i = 0; i < maxShow; i++) {
+      const e = leaderboardData[i];
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+      html += `<div class="lb-entry top-${i < 3 ? i : ''}">
+        <span class="lb-rank">${medal}</span>
+        <span class="lb-name">${e.name}</span>
+        <span class="lb-score">${e.score}</span>
+      </div>`;
+    }
+    listEl.innerHTML = html;
+  }
+
+  if (idEl) {
+    idEl.textContent = playerName || '未设置';
+  }
 }
 
 function isTopScore(s) {
@@ -780,6 +809,7 @@ document.addEventListener('keydown', (e) => {
     playerName = '';
     localStorage.removeItem('flappyPlayerName');
     inputName = '';
+    updateLeaderboardDOM();
     return;
   }
 

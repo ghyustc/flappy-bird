@@ -154,6 +154,83 @@ html, body {
   line-height: 1.6;
 }
 
+/* ---- 排行榜列表 ---- */
+.leaderboard-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.lb-placeholder {
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.lb-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  font-size: 12px;
+}
+
+.lb-rank {
+  width: 20px;
+  text-align: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.lb-name {
+  flex: 1;
+  color: #fff;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-score {
+  color: #ffd700;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.lb-entry.top-0 .lb-rank,
+.lb-entry.top-1 .lb-rank,
+.lb-entry.top-2 .lb-rank {
+  font-size: 16px;
+}
+
+.lb-entry.top-0 { background: rgba(255,215,0,0.12); }
+.lb-entry.top-1 { background: rgba(192,192,192,0.10); }
+.lb-entry.top-2 { background: rgba(205,127,50,0.10); }
+
+/* ---- 玩家 ID 区域 ---- */
+.player-id-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.player-id-label {
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+.player-id-value {
+  color: #ffd700;
+  font-weight: bold;
+}
+
 /* ---- 游戏容器 ---- */
 .game-container {
   position: relative;
