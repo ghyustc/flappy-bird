@@ -952,7 +952,7 @@ function drawGameOverScreen() {
 
   ctx.fillStyle = '#fff';
   ctx.font = '15px Arial';
-  ctx.fillText('点击重新开始', W / 2, panelY + 155);
+  ctx.fillText('点击返回主界面', W / 2, panelY + 155);
 }
 
 function drawNameInputScreen() {
