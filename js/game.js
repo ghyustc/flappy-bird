@@ -43,13 +43,13 @@ let soundOn = true;
 // ---- Firebase 配置 ----
 // 使用前请填入你的 Firebase 项目配置
 const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyDummyKeyReplaceWithYours',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  databaseURL: 'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
-  projectId: 'YOUR_PROJECT',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: '000000000000',
-  appId: '1:000000000000:web:xxxxxxxxxxxxxxxxxxxx',
+  apiKey: 'AIzaSyDCgPTV6Rl1zEkFkNXTq4N_tOOVvGgaRns',
+  authDomain: 'flappy-bird-1bf2e.firebaseapp.com',
+  databaseURL: 'https://flappy-bird-1bf2e-default-rtdb.firebaseio.com',
+  projectId: 'flappy-bird-1bf2e',
+  storageBucket: 'flappy-bird-1bf2e.appspot.com',
+  messagingSenderId: '842018310983',
+  appId: '1:842018310983:web:87e5269857ceaa27391a62',
 };
 let firebaseReady = false;
 
