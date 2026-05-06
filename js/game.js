@@ -70,6 +70,12 @@ let inputName = '';
 let isEnteringName = false;
 const MAX_NAME_LEN = 3;
 const LEADERBOARD_SIZE = 10;
+let playerName = localStorage.getItem('flappyPlayerName') || '';
+
+function savePlayerName(n) {
+  playerName = n;
+  localStorage.setItem('flappyPlayerName', n);
+}
 
 async function loadLeaderboard() {
   if (!firebaseReady) return;
@@ -109,7 +115,7 @@ async function submitScore(name, s) {
 }
 
 function resetNameInput() {
-  inputName = '';
+  inputName = playerName || '';
   isEnteringName = false;
 }
 
@@ -514,7 +520,11 @@ function resetGame() {
 
 function enterGameOverCheck() {
   if (!firebaseReady || isEnteringName || leaderboardLoading) return;
-  if (isTopScore(score)) {
+  if (!isTopScore(score)) return;
+  if (playerName) {
+    submitScore(playerName, score);
+    loadLeaderboard();
+  } else {
     isEnteringName = true;
     inputName = '';
   }
@@ -744,6 +754,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (e.code === 'Enter') {
       if (inputName.length > 0) {
+        savePlayerName(inputName);
         submitScore(inputName, score);
         loadLeaderboard();
         resetNameInput();
@@ -785,6 +796,15 @@ document.addEventListener('keydown', (e) => {
         resetGame();
         break;
     }
+  }
+
+  if (e.code === 'KeyM' && gameState === STATE.START) {
+    e.preventDefault();
+    sound.init();
+    playerName = '';
+    localStorage.removeItem('flappyPlayerName');
+    inputName = '';
+    return;
   }
 
   if (e.code === 'KeyP') {
@@ -916,6 +936,12 @@ function drawGameOverScreen() {
   ctx.font = '16px Arial';
   ctx.fillText(`最高分: ${highScore}`, W / 2, panelY + 110);
 
+  if (firebaseReady && playerName && isTopScore(score)) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '12px Arial';
+    ctx.fillText('分数已自动上传', W / 2, panelY + 130);
+  }
+
   ctx.fillStyle = '#fff';
   ctx.font = '15px Arial';
   ctx.fillText('点击重新开始', W / 2, panelY + 155);
@@ -986,38 +1012,44 @@ function drawNameInputScreen() {
 
 function drawLeaderboardOnStart() {
   if (leaderboardLoading) {
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '13px Arial';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('加载排行榜中...', W / 2, 400);
+    ctx.fillText('加载排行榜...', W / 2, 395);
     return;
   }
   if (leaderboardData.length === 0) return;
 
   const startY = 380;
   ctx.fillStyle = '#ffd700';
-  ctx.font = 'bold 15px Arial';
+  ctx.font = 'bold 13px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('— 排行榜 —', W / 2, startY);
+  ctx.fillText('— 排行榜 TOP 5 —', W / 2, startY);
 
-  ctx.font = '13px Arial';
-  const maxShow = Math.min(LEADERBOARD_SIZE, leaderboardData.length);
+  ctx.font = '12px Arial';
+  const maxShow = Math.min(5, leaderboardData.length);
   for (let i = 0; i < maxShow; i++) {
     const entry = leaderboardData[i];
-    const y = startY + 22 + i * 22;
-    // 排名图标
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
-    ctx.fillStyle = i < 3 ? '#ffd700' : 'rgba(255,255,255,0.7)';
-    ctx.textAlign = 'right';
-    ctx.fillText(medal, W / 2 - 48, y);
-    // 名字
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.fillText(entry.name, W / 2 + 10, y);
-    // 分数
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    const y = startY + 20 + i * 20;
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+    ctx.fillStyle = i < 3 ? '#ffd700' : 'rgba(255,255,255,0.6)';
     ctx.textAlign = 'left';
-    ctx.fillText(`${entry.score}`, W / 2 + 60, y);
+    ctx.fillText(`${medal}  ${entry.name}`, W / 2 - 50, y);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${entry.score}`, W / 2 + 50, y);
+  }
+
+  // 玩家 ID 显示
+  ctx.textAlign = 'center';
+  if (playerName) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '11px Arial';
+    ctx.fillText(`你的 ID: ${playerName}  (按 M 修改)`, W / 2, startY + 20 + maxShow * 20 + 18);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '11px Arial';
+    ctx.fillText('首次进榜时设置你的 ID', W / 2, startY + 20 + maxShow * 20 + 14);
   }
 }
 
