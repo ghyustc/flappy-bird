@@ -745,7 +745,8 @@ function onCanvasInput(e) {
       break;
     case STATE.GAMEOVER:
       loadLeaderboard();
-      resetGame();
+      init();
+      gameState = STATE.START;
       break;
   }
 }
@@ -798,7 +799,8 @@ document.addEventListener('keydown', (e) => {
         break;
       case STATE.GAMEOVER:
         loadLeaderboard();
-        resetGame();
+        init();
+        gameState = STATE.START;
         break;
     }
   }
