@@ -37,6 +37,7 @@ let shakeTimer = 0;
 let currentGap = CONFIG.pipeGap;
 let currentSpeed = CONFIG.pipeSpeed;
 let paused = false;
+let timeScale = 1.0;
 let soundOn = true;
 
 // ---- 面板 DOM 缓存 ----
@@ -139,19 +140,19 @@ class Bird {
 
   update() {
     if (!this.alive) {
-      this.velocity += CONFIG.gravity;
-      this.y += this.velocity;
-      this.rotation = Math.min(this.rotation + 0.08, Math.PI / 2);
+      this.velocity += CONFIG.gravity * timeScale;
+      this.y += this.velocity * timeScale;
+      this.rotation = Math.min(this.rotation + 0.08 * timeScale, Math.PI / 2);
       return;
     }
 
-    this.velocity += CONFIG.gravity;
-    this.y += this.velocity;
+    this.velocity += CONFIG.gravity * timeScale;
+    this.y += this.velocity * timeScale;
 
     const targetRotation = this.velocity * 0.08;
-    this.rotation += (targetRotation - this.rotation) * 0.12;
+    this.rotation += (targetRotation - this.rotation) * 0.12 * timeScale;
 
-    this.wingPhase += 0.25;
+    this.wingPhase += 0.25 * timeScale;
 
     if (this.y - CONFIG.birdRadius <= CONFIG.ceilingHeight ||
         this.y + CONFIG.birdRadius >= H - CONFIG.groundHeight) {
@@ -243,7 +244,7 @@ class Pipe {
   }
 
   update(speed) {
-    this.x -= speed;
+    this.x -= speed * timeScale;
   }
 
   isOffScreen() {
@@ -315,7 +316,7 @@ class PipeManager {
   }
 
   update(speed) {
-    this.spawnTimer++;
+    this.spawnTimer += timeScale;
     if (this.spawnTimer >= CONFIG.pipeInterval) {
       this.spawnTimer = 0;
       this.spawnPipe();
@@ -395,7 +396,7 @@ class Cloud {
   }
 
   update() {
-    this.x -= this.speed;
+    this.x -= this.speed * timeScale;
     if (this.x < -80) this.reset(false);
   }
 
@@ -817,7 +818,7 @@ function drawScore() {
 
 function drawShake() {
   if (shakeTimer > 0) {
-    shakeTimer--;
+    shakeTimer -= timeScale;
     const dx = (Math.random() - 0.5) * shakeTimer * 0.8;
     const dy = (Math.random() - 0.5) * shakeTimer * 0.8;
     ctx.translate(dx, dy);
@@ -827,7 +828,15 @@ function drawShake() {
 // ============================================================
 // 主游戏循环
 // ============================================================
-function gameLoop() {
+let lastTimestamp = 0;
+
+function gameLoop(timestamp) {
+  if (lastTimestamp) {
+    const dt = Math.min(timestamp - lastTimestamp, 50); // cap to prevent spiral
+    timeScale = dt / (1000 / 60); // normalize to 60fps
+  }
+  lastTimestamp = timestamp;
+
   ctx.save();
   ctx.clearRect(0, 0, W, H);
 
@@ -915,7 +924,7 @@ function gameLoop() {
 
   updatePanelDOM();
 
-  frameCount++;
+  frameCount += timeScale;
   requestAnimationFrame(gameLoop);
 }
 
