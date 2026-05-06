@@ -40,6 +40,79 @@ let paused = false;
 let timeScale = 1.0;
 let soundOn = true;
 
+// ---- Firebase 配置 ----
+// 使用前请填入你的 Firebase 项目配置
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDummyKeyReplaceWithYours',
+  authDomain: 'YOUR_PROJECT.firebaseapp.com',
+  databaseURL: 'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
+  projectId: 'YOUR_PROJECT',
+  storageBucket: 'YOUR_PROJECT.appspot.com',
+  messagingSenderId: '000000000000',
+  appId: '1:000000000000:web:xxxxxxxxxxxxxxxxxxxx',
+};
+let firebaseReady = false;
+
+function initFirebase() {
+  if (firebaseReady) return;
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseReady = true;
+  } catch (_) {
+    // Firebase 未配置或加载失败
+  }
+}
+
+// ---- 排行榜 ----
+let leaderboardData = [];
+let leaderboardLoading = false;
+let inputName = '';
+let isEnteringName = false;
+const MAX_NAME_LEN = 3;
+const LEADERBOARD_SIZE = 10;
+
+async function loadLeaderboard() {
+  if (!firebaseReady) return;
+  leaderboardLoading = true;
+  try {
+    const snap = await firebase.database()
+      .ref('leaderboard')
+      .orderByChild('score')
+      .limitToLast(LEADERBOARD_SIZE)
+      .once('value');
+    const data = snap.val();
+    leaderboardData = data
+      ? Object.values(data).sort((a, b) => b.score - a.score)
+      : [];
+  } catch (_) {
+    // 网络错误则静默，保留缓存数据
+  }
+  leaderboardLoading = false;
+}
+
+function isTopScore(s) {
+  if (leaderboardData.length < LEADERBOARD_SIZE) return s > 0;
+  return s > leaderboardData[leaderboardData.length - 1].score;
+}
+
+async function submitScore(name, s) {
+  if (!firebaseReady) return;
+  try {
+    await firebase.database().ref('leaderboard').push({
+      name: name,
+      score: s,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+  } catch (_) {
+    // 提交失败静默
+  }
+}
+
+function resetNameInput() {
+  inputName = '';
+  isEnteringName = false;
+}
+
 // ---- 面板 DOM 缓存 ----
 let lastPanelScore = -1;
 let lastPanelBest = -1;
@@ -434,8 +507,17 @@ function init() {
 }
 
 function resetGame() {
+  resetNameInput();
   init();
   gameState = STATE.PLAYING;
+}
+
+function enterGameOverCheck() {
+  if (!firebaseReady || isEnteringName || leaderboardLoading) return;
+  if (isTopScore(score)) {
+    isEnteringName = true;
+    inputName = '';
+  }
 }
 
 // ============================================================
@@ -631,9 +713,13 @@ function onCanvasInput(e) {
     return;
   }
 
+  // 名字输入模式下，点击不做游戏操作
+  if (isEnteringName) return;
+
   // 游戏输入
   switch (gameState) {
     case STATE.START:
+      loadLeaderboard();
       resetGame();
       break;
     case STATE.PLAYING:
@@ -643,6 +729,7 @@ function onCanvasInput(e) {
       }
       break;
     case STATE.GAMEOVER:
+      loadLeaderboard();
       resetGame();
       break;
   }
@@ -652,11 +739,39 @@ canvas.addEventListener('click', onCanvasInput);
 canvas.addEventListener('touchstart', onCanvasInput, { passive: false });
 
 document.addEventListener('keydown', (e) => {
+  // 名字输入模式下，拦截键盘输入
+  if (isEnteringName) {
+    e.preventDefault();
+    if (e.code === 'Enter') {
+      if (inputName.length > 0) {
+        submitScore(inputName, score);
+        loadLeaderboard();
+        resetNameInput();
+        gameState = STATE.START;
+      }
+      return;
+    }
+    if (e.code === 'Backspace') {
+      inputName = inputName.slice(0, -1);
+      return;
+    }
+    if (inputName.length < MAX_NAME_LEN && /^Key[A-Z]$/.test(e.code)) {
+      inputName += e.code.slice(-1);
+      return;
+    }
+    if (inputName.length < MAX_NAME_LEN && /^Digit[0-9]$/.test(e.code)) {
+      inputName += e.code.slice(-1);
+      return;
+    }
+    return;
+  }
+
   if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
     e.preventDefault();
     sound.init();
     switch (gameState) {
       case STATE.START:
+        loadLeaderboard();
         resetGame();
         break;
       case STATE.PLAYING:
@@ -666,6 +781,7 @@ document.addEventListener('keydown', (e) => {
         }
         break;
       case STATE.GAMEOVER:
+        loadLeaderboard();
         resetGame();
         break;
     }
@@ -756,6 +872,8 @@ function drawStartScreen() {
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = '14px Arial';
   ctx.fillText(`最高分: ${highScore}`, W / 2, 350);
+
+  drawLeaderboardOnStart();
 }
 
 function drawGameOverScreen() {
@@ -801,6 +919,106 @@ function drawGameOverScreen() {
   ctx.fillStyle = '#fff';
   ctx.font = '15px Arial';
   ctx.fillText('点击重新开始', W / 2, panelY + 155);
+}
+
+function drawNameInputScreen() {
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(0, 0, W, H);
+
+  const panelW = 260;
+  const panelH = 230;
+  const panelX = (W - panelW) / 2;
+  const panelY = 180;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 2;
+  const r = 12;
+  ctx.beginPath();
+  ctx.moveTo(panelX + r, panelY);
+  ctx.lineTo(panelX + panelW - r, panelY);
+  ctx.quadraticCurveTo(panelX + panelW, panelY, panelX + panelW, panelY + r);
+  ctx.lineTo(panelX + panelW, panelY + panelH - r);
+  ctx.quadraticCurveTo(panelX + panelW, panelY + panelH, panelX + panelW - r, panelY + panelH);
+  ctx.lineTo(panelX + r, panelY + panelH);
+  ctx.quadraticCurveTo(panelX, panelY + panelH, panelX, panelY + panelH - r);
+  ctx.lineTo(panelX, panelY + r);
+  ctx.quadraticCurveTo(panelX, panelY, panelX + r, panelY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 22px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏆 进入排行榜!', W / 2, panelY + 35);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px Arial';
+  ctx.fillText(`得分: ${score}`, W / 2, panelY + 65);
+
+  ctx.fillStyle = '#aaa';
+  ctx.font = '13px Arial';
+  ctx.fillText('输入你的名字 (3个字符)', W / 2, panelY + 95);
+
+  // 输入框
+  const inputW = 110;
+  const inputH = 38;
+  const inputX = (W - inputW) / 2;
+  const inputY = panelY + 110;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  fillRoundRect(ctx, inputX, inputY, inputW, inputH, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 24px Arial';
+  ctx.textAlign = 'center';
+  const displayName = inputName + '_'.repeat(MAX_NAME_LEN - inputName.length);
+  ctx.fillText(displayName, W / 2, inputY + 28);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '12px Arial';
+  ctx.fillText('按 Enter 确认', W / 2, inputY + 58);
+}
+
+function drawLeaderboardOnStart() {
+  if (leaderboardLoading) {
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('加载排行榜中...', W / 2, 400);
+    return;
+  }
+  if (leaderboardData.length === 0) return;
+
+  const startY = 380;
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 15px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('— 排行榜 —', W / 2, startY);
+
+  ctx.font = '13px Arial';
+  const maxShow = Math.min(LEADERBOARD_SIZE, leaderboardData.length);
+  for (let i = 0; i < maxShow; i++) {
+    const entry = leaderboardData[i];
+    const y = startY + 22 + i * 22;
+    // 排名图标
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+    ctx.fillStyle = i < 3 ? '#ffd700' : 'rgba(255,255,255,0.7)';
+    ctx.textAlign = 'right';
+    ctx.fillText(medal, W / 2 - 48, y);
+    // 名字
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(entry.name, W / 2 + 10, y);
+    // 分数
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${entry.score}`, W / 2 + 60, y);
+  }
 }
 
 function drawScore() {
@@ -878,6 +1096,7 @@ function gameLoop(timestamp) {
             highScore = score;
             localStorage.setItem('flappyHighScore', highScore);
           }
+          enterGameOverCheck();
         }
 
         if (!bird.alive && gameState === STATE.PLAYING) {
@@ -887,6 +1106,7 @@ function gameLoop(timestamp) {
             highScore = score;
             localStorage.setItem('flappyHighScore', highScore);
           }
+          enterGameOverCheck();
         }
 
         if (bird.alive && pipes.checkScore(bird.x)) {
@@ -909,7 +1129,11 @@ function gameLoop(timestamp) {
       pipes.draw(ctx);
       bird.draw(ctx);
       drawScore();
-      drawGameOverScreen();
+      if (isEnteringName) {
+        drawNameInputScreen();
+      } else {
+        drawGameOverScreen();
+      }
       break;
   }
 
@@ -933,4 +1157,6 @@ function gameLoop(timestamp) {
 // ============================================================
 init();
 updateSoundBtnDOM();
+initFirebase();
+loadLeaderboard();
 gameLoop();
