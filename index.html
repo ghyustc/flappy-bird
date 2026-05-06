@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flappy Bird</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="wrapper">
+    <!-- 左侧面板 -->
+    <div class="side-panel panel-left">
+      <div class="panel-title">Flappy Bird</div>
+      <div class="panel-divider"></div>
+      <div class="stat-block">
+        <div class="stat-label">得分</div>
+        <div class="stat-value" id="panel-score">0</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-label">最高分</div>
+        <div class="stat-value best" id="panel-best">0</div>
+      </div>
+      <div class="panel-divider"></div>
+      <button class="sound-btn" id="sound-btn" title="音效开关">
+        <span class="sound-icon">🔊</span>
+        <span class="sound-label">音效已开启</span>
+      </button>
+    </div>
+
+    <!-- 游戏区域 -->
+    <div class="game-container">
+      <canvas id="canvas" width="400" height="700"></canvas>
+    </div>
+
+    <!-- 右侧面板 -->
+    <div class="side-panel panel-right">
+      <div class="panel-title">操作说明</div>
+      <div class="panel-divider"></div>
+      <div class="control-list">
+        <div class="control-item">
+          <kbd>空格</kbd><kbd>W</kbd><kbd>↑</kbd>
+          <span>飞行</span>
+        </div>
+        <div class="control-item">
+          <kbd>P</kbd>
+          <span>暂停</span>
+        </div>
+        <div class="control-item">
+          <span class="control-icon">🖱️</span>
+          <span>点击飞行</span>
+        </div>
+        <div class="control-item">
+          <span class="control-icon">📱</span>
+          <span>触屏飞行</span>
+        </div>
+      </div>
+      <div class="panel-divider"></div>
+      <p class="panel-tip">穿过管道得分<br>难度逐渐递增</p>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+</body>
+</html>

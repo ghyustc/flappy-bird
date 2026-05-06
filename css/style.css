@@ -1,0 +1,186 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1a2e;
+  font-family: 'Arial', 'Helvetica Neue', sans-serif;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- 主布局 ---- */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* ---- 侧面板 ---- */
+.side-panel {
+  width: 200px;
+  min-width: 200px;
+  background: linear-gradient(180deg, #1e2a3a 0%, #162032 100%);
+  border-radius: 14px;
+  padding: 24px 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel-title {
+  color: #ffd700;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.panel-divider {
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  margin: 14px 0;
+}
+
+/* ---- 分数区块 ---- */
+.stat-block {
+  text-align: center;
+  margin: 12px 0;
+}
+
+.stat-label {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: #fff;
+  font-size: 42px;
+  font-weight: bold;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.stat-value.best {
+  color: #ffd700;
+  font-size: 24px;
+}
+
+.stat-value.pop {
+  transform: scale(1.2);
+}
+
+/* ---- 音效按钮 ---- */
+.sound-btn {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.sound-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.sound-btn.muted .sound-label {
+  color: rgba(255,255,255,0.4);
+}
+
+.sound-icon {
+  font-size: 16px;
+}
+
+/* ---- 操作说明 ---- */
+.control-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+}
+
+.control-item kbd {
+  display: inline-block;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: inherit;
+  color: #ddd;
+  white-space: nowrap;
+}
+
+.control-icon {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+}
+
+.panel-tip {
+  color: rgba(255,255,255,0.35);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ---- 游戏容器 ---- */
+.game-container {
+  position: relative;
+  width: 100vmin;
+  height: 100vmin;
+  max-width: 400px;
+  max-height: 700px;
+  flex-shrink: 0;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ---- 响应式：窄屏隐藏面板 ---- */
+@media (max-width: 900px) {
+  .side-panel {
+    display: none;
+  }
+
+  .wrapper {
+    padding: 0;
+    gap: 0;
+  }
+}
