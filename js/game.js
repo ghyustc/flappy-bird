@@ -61,12 +61,10 @@ function savePlayerName(n) {
 async function loadLeaderboard() {
   leaderboardLoading = true;
   try {
-    const resp = await fetch(
-      `${DB_URL}/leaderboard.json?orderBy=%22score%22&limitToLast=${LEADERBOARD_SIZE}`
-    );
+    const resp = await fetch(`${DB_URL}/leaderboard.json`);
     const data = await resp.json();
     leaderboardData = data
-      ? Object.values(data).sort((a, b) => b.score - a.score)
+      ? Object.values(data).sort((a, b) => b.score - a.score).slice(0, LEADERBOARD_SIZE)
       : [];
   } catch (_) {
     // 网络错误则静默，保留缓存数据
