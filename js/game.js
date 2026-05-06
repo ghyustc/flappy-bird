@@ -40,28 +40,8 @@ let paused = false;
 let timeScale = 1.0;
 let soundOn = true;
 
-// ---- Firebase 配置 ----
-// 使用前请填入你的 Firebase 项目配置
-const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyDCgPTV6Rl1zEkFkNXTq4N_tOOVvGgaRns',
-  authDomain: 'flappy-bird-1bf2e.firebaseapp.com',
-  databaseURL: 'https://flappy-bird-1bf2e-default-rtdb.firebaseio.com',
-  projectId: 'flappy-bird-1bf2e',
-  storageBucket: 'flappy-bird-1bf2e.appspot.com',
-  messagingSenderId: '842018310983',
-  appId: '1:842018310983:web:87e5269857ceaa27391a62',
-};
-let firebaseReady = false;
-
-function initFirebase() {
-  if (firebaseReady) return;
-  try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    firebaseReady = true;
-  } catch (_) {
-    // Firebase 未配置或加载失败
-  }
-}
+// ---- Firebase REST API ----
+const DB_URL = 'https://flappy-bird-1bf2e-default-rtdb.firebaseio.com';
 
 // ---- 排行榜 ----
 let leaderboardData = [];
@@ -78,15 +58,12 @@ function savePlayerName(n) {
 }
 
 async function loadLeaderboard() {
-  if (!firebaseReady) return;
   leaderboardLoading = true;
   try {
-    const snap = await firebase.database()
-      .ref('leaderboard')
-      .orderByChild('score')
-      .limitToLast(LEADERBOARD_SIZE)
-      .once('value');
-    const data = snap.val();
+    const resp = await fetch(
+      `${DB_URL}/leaderboard.json?orderBy=%22score%22&limitToLast=${LEADERBOARD_SIZE}`
+    );
+    const data = await resp.json();
     leaderboardData = data
       ? Object.values(data).sort((a, b) => b.score - a.score)
       : [];
@@ -102,12 +79,11 @@ function isTopScore(s) {
 }
 
 async function submitScore(name, s) {
-  if (!firebaseReady) return;
   try {
-    await firebase.database().ref('leaderboard').push({
-      name: name,
-      score: s,
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
+    await fetch(`${DB_URL}/leaderboard.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score: s, createdAt: Date.now() }),
     });
   } catch (_) {
     // 提交失败静默
@@ -519,7 +495,7 @@ function resetGame() {
 }
 
 function enterGameOverCheck() {
-  if (!firebaseReady || isEnteringName || leaderboardLoading) return;
+  if (isEnteringName || leaderboardLoading) return;
   if (!isTopScore(score)) return;
   if (playerName) {
     submitScore(playerName, score);
@@ -936,7 +912,7 @@ function drawGameOverScreen() {
   ctx.font = '16px Arial';
   ctx.fillText(`最高分: ${highScore}`, W / 2, panelY + 110);
 
-  if (firebaseReady && playerName && isTopScore(score)) {
+  if (playerName && isTopScore(score)) {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '12px Arial';
     ctx.fillText('分数已自动上传', W / 2, panelY + 130);
@@ -1189,6 +1165,5 @@ function gameLoop(timestamp) {
 // ============================================================
 init();
 updateSoundBtnDOM();
-initFirebase();
 loadLeaderboard();
 gameLoop();
